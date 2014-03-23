@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<style>
+
+
+
+#chart {
+  height: 500px;
+}
+
+.node rect {
+  cursor: move;
+  fill-opacity: .9;
+  shape-rendering: crispEdges;
+}
+
+.node text {
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff;
+}
+
+.link {
+  fill: none;
+  /*stroke: #000;*/
+  stroke:white;
+  stroke-opacity: .2;
+}
+
+.link:hover {
+  stroke-opacity: .5;
+}
+
+svg {
+  font: 10px sans-serif;
+  color:white;
+  //stroke:grey;
+}
+
+.area {
+  //fill: steelblue;
+  fill:none;
+  clip-path: url(#clip);
+  stroke:steelblue;
+  stroke-width:3px;
+}
+
+.area3 {
+  //fill: steelblue;
+  fill:none;
+  clip-path: url(#clip);
+  stroke:green;
+  stroke-width:3px;
+}
+
+.area4 {
+  //fill: steelblue;
+  fill:none;
+  clip-path: url(#clip);
+  stroke:red;
+  stroke-width:3px;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.axis text{
+  stroke:grey;
+}
+
+.brush .extent {
+  stroke: black;
+  fill:white;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}
+
+.dot{
+  fill:purple;
+}
+
+.dot_text{
+  font-size:20px;
+  fill:red;
+}
+
+.chart_header{
+  font-size:20px;
+  fill:grey;
+}
+</style>
+<body class="background-style">
+
+<header>
+ 
+</header>
+      <p id="chart"/>
+<footer>
+  
+</footer>
+<script src="js/d3.v3.min.js"></script>
+<script src="js/moment.min.js"></script>
+
+<script>
+var segments=3;
+var margin = {top: 10, right: 10, bottom: 100, left: 40},
+    margin2 = {top: 430, right: 10, bottom: 20, left: 40},
+    width = 960 - margin.left - margin.right,
+    height = (500 - margin.top - margin.bottom)/segments,//height of first timeline
+    height_data2 =(500 - margin.top - margin.bottom)/segments,//height of second timeline
+    height_data3 =(500 - margin.top - margin.bottom)/segments,//height of second timeline
+    height2 = 500 - margin2.top - margin2.bottom;//Height of selection timeline
+
+//var parseDate = d3.time.format("%b %Y").parse;
+var parseDate = d3.time.format("%d-%b-%y").parse;
+
+//Setting the scales of the two timelines
+var x = d3.time.scale().range([0, width]),
+    x2 = d3.time.scale().range([0, width]),
+    x_3=d3.time.scale().range([0, width]),
+    y = d3.scale.linear().range([height, 0]),
+    y_3=d3.scale.linear().range([height, 0]),
+    y2 = d3.scale.linear().range([height2, 0]);
+
+//Setting the axis labels
+var xAxis = d3.svg.axis().scale(x).orient("bottom"),
+    xAxis2 = d3.svg.axis().scale(x2).orient("bottom"),
+    yAxis = d3.svg.axis().scale(y).orient("left"),
+    y_3Axis= d3.svg.axis().scale(y_3).orient("left");
+
+//Bushing is for the selection of the second timeline which calls the brush function
+var brush = d3.svg.brush()
+    .x(x2);
+    brush.on("brush", brushed);
+    brush.on("brushend",mouseup);
+
+//Area plotting in both timelines
+var area = d3.svg.line()
+    //.interpolate("monotone")
+    .x(function(d) { return x(d.date); })
+    .y(function(d) { return y(d.price); });
+    //.y0(height)
+    //.y1(function(d) { return y(d.price); });
+
+var area2 = d3.svg.area()
+    .interpolate("monotone")
+    .x(function(d) { return x2(d.date); })
+    .y0(height2)
+    .y1(function(d) { return y2(d.price); });
+
+//Plotting Twitter UH data
+var area3 = d3.svg.line()
+    //.interpolate("monotone")
+    .x(function(d) { return x_3(d.date); })
+    .y(function(d) { return y_3(d.price); });
+    //.y0(height)
+    //.y1(function(d) { return y_3(d.price); });
+
+//Plaotting Twitter UH with SG data
+var area4 = d3.svg.line()
+    //.interpolate("monotone")
+    .x(function(d) { return x_3(d.date); })
+    .y(function(d) { return y_3(d.sg); });
+    //.y0(height)
+    //.y1(function(d) { return y_3(d.price); });
+
+//Root SVG element 
+var svg = d3.select("#chart").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height*segments + margin.top + margin.bottom);
+
+svg.append("defs").append("clipPath")
+    .attr("id", "clip")
+  .append("rect")
+    .attr("width", width)
+    .attr("height", height);
+
+//The top timeine element
+var data2 = svg.append("g")
+    .attr("class", "focus")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var focus = svg.append("g")
+    .attr("class", "focus")
+    .attr("transform", "translate(" + margin.left + "," + (margin.top+height*2) + ")");
+
+var focus1 = svg.append("g")
+    .attr("class", "focus")
+    .attr("transform", "translate(" + margin.left + "," + (margin.top+height) + ")");
+
+
+//The bottom timeline element
+var context = svg.append("g")
+    .attr("class", "context")
+    .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+data2.append('text').text("Event").attr("class","chart_header").attr('x',0).attr('y',20);
+focus.append('text').text("Defacements").attr("class","chart_header").attr('x',0).attr('y',20);
+focus1.append('text').text("Twitter").attr("class","chart_header").attr('x',0).attr('y',20);
+
+//Data for the dots
+var timeline_data=[
+  ["5-Feb-14","Event 1","http://google.com","http://www.google.com",50],
+  ["6-Feb-14","Event 2","http://www.yahoo.com","http://www.yahoo.com",70],
+  ["18-Feb-14","Event 3","http://www.bing.com","http://www.bing.com",50]
+];
+
+function dot_y(d){
+  return y(d[4]);
+}
+
+function text_dot(d){
+  return dot_x(d)+15;
+}
+
+function dot_x(d){
+  return x(parseDate(d[0]));
+}
+
+d3.csv("twitter.csv", type, function(error, data) {
+  x_3.domain(d3.extent(data.map(function(d) { return d.date; })));
+  y_3.domain([0, d3.max(data.map(function(d) { return d.price; }))]);
+
+  focus1.append("path")
+      .datum(data)
+      .attr("class", "area3")
+      .attr("d", area3);
+
+  focus1.append("path")
+      .datum(data)
+      .attr("class", "area4")
+      .attr("d", area4);
+
+  focus1.append("g")
+      .attr("class", "y axis")
+      .call(y_3Axis);
+  /*
+  focus1.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);*/
+  
+});
+
+d3.csv("hotel.csv", type, function(error, data) {
+  x.domain(d3.extent(data.map(function(d) { return d.date; })));
+  y.domain([0, d3.max(data.map(function(d) { return d.price; }))]);
+  x2.domain(x.domain());
+  y2.domain(y.domain());
+
+  
+
+  focus.append("path")
+      .datum(data)
+      .attr("class", "area")
+      .attr("d", area);
+/*
+  focus.append('circle').attr("class","dot").data(timeline_data).enter().append()
+      .attr("cx",x(parseDate('1-May-10')))
+      .attr("cy",y(500)).attr("r","25");
+*/
+
+  data2.selectAll("cirlce").data(timeline_data).enter().append('circle').attr("class","dot")
+      .attr("cx",dot_x)
+      .attr("cy",dot_y).attr("r","15")
+      .append('title').text(function(d){
+        return d[0];
+      });
+
+  var text=data2.selectAll(".dot_text").data(timeline_data).enter().append('text');
+
+  text.attr('class','dot_text').attr("x",text_dot).attr('y',dot_y)
+  .text(function(d){
+    return d[1];
+  });
+
+  focus.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  focus.append("g")
+      .attr("class", "y axis")
+      .call(yAxis);
+
+  context.append("path")
+      .datum(data)
+      .attr("class", "area")
+      .attr("d", area2);
+
+  context.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height2 + ")")
+      .call(xAxis2);
+
+  context.append("g")
+      .attr("class", "x brush")
+      .call(brush)
+    .selectAll("rect")
+      .attr("y", -6)
+      .attr("height", height2 + 7);
+});
+
+/*
+When the brush function is called this will redraw all the elements based on the new axis
+Although i have no idea how it works
+*/
+function brushed() {
+  x.domain(brush.empty() ? x2.domain() : brush.extent());
+  x_3.domain(brush.empty() ? x2.domain() : brush.extent());
+
+  
+
+  focus.select(".area").attr("d", area);
+  focus.select(".x.axis").call(xAxis);
+
+  focus1.select(".area3").attr("d", area3);
+  focus1.select(".area4").attr("d", area4);
+  focus1.select(".x.axis").call(xAxis);
+
+  data2.selectAll(".dot").
+    attr("cx",dot_x)
+    .attr("cy",dot_y);
+
+  data2.selectAll(".dot_text")
+    .attr("x",text_dot)
+    .attr("y",dot_y);
+}
+
+function mouseup(data){
+  if(!brush.empty()){
+    var date_array=brush.extent();
+    var start=moment(date_array[0]).format("YYYY-MM-DD");
+    var end=moment(date_array[1]).format("YYYY-MM-DD");
+    console.log(start +" "+end);
+    publishDate(start,end);
+  }
+}
+
+function type(d) {
+  d.date = parseDate(d.date);
+  //d.price = +d.price;
+  d.price = parseFloat(d.price);
+  return d;
+}
+
+</script>
