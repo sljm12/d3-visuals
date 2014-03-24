@@ -1,4 +1,7 @@
 <!DOCTYPE html>
+<!--
+  Each path based graph requires their own x and y domains in order for it to work.
+  -->
 <html>
 <meta charset="utf-8">
 <style>
@@ -102,9 +105,11 @@ svg {
 <footer>
   
 </footer>
+<!--
 <script src="js/d3.v3.min.js"></script>
-<script src="js/moment.min.js"></script>
-
+<script src="js/moment.min.js"></script>-->
+<script src="http://cdnjs.cloudflare.com/ajax/libs/d3/3.4.2/d3.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/moment.js/2.5.1/moment.min.js"></script>
 <script>
 var segments=3;
 var margin = {top: 10, right: 10, bottom: 100, left: 40},
@@ -112,29 +117,29 @@ var margin = {top: 10, right: 10, bottom: 100, left: 40},
     width = 960 - margin.left - margin.right,
     height = (500 - margin.top - margin.bottom)/segments,//height of first timeline
     height_data2 =(500 - margin.top - margin.bottom)/segments,//height of second timeline
-    height_data3 =(500 - margin.top - margin.bottom)/segments,//height of second timeline
-    height2 = 500 - margin2.top - margin2.bottom;//Height of selection timeline
+    height_data3 =(500 - margin.top - margin.bottom)/segments,//height of third timeline
+    brush_height = 500 - margin2.top - margin2.bottom;//Height of selection timeline
 
 //var parseDate = d3.time.format("%b %Y").parse;
 var parseDate = d3.time.format("%d-%b-%y").parse;
 
 //Setting the scales of the two timelines
 var x = d3.time.scale().range([0, width]),
-    x2 = d3.time.scale().range([0, width]),
-    x_3=d3.time.scale().range([0, width]),
+    brush_x_domain = d3.time.scale().range([0, width]),
+    twitter_x_domain=d3.time.scale().range([0, width]),
     y = d3.scale.linear().range([height, 0]),
     y_3=d3.scale.linear().range([height, 0]),
-    y2 = d3.scale.linear().range([height2, 0]);
+    brush_y_domain = d3.scale.linear().range([brush_height, 0]);
 
 //Setting the axis labels
 var xAxis = d3.svg.axis().scale(x).orient("bottom"),
-    xAxis2 = d3.svg.axis().scale(x2).orient("bottom"),
+    xAxis2 = d3.svg.axis().scale(brush_x_domain).orient("bottom"),
     yAxis = d3.svg.axis().scale(y).orient("left"),
-    y_3Axis= d3.svg.axis().scale(y_3).orient("left");
+    twitter_y_axis= d3.svg.axis().scale(y_3).orient("left");
 
 //Bushing is for the selection of the second timeline which calls the brush function
 var brush = d3.svg.brush()
-    .x(x2);
+    .x(brush_x_domain);
     brush.on("brush", brushed);
     brush.on("brushend",mouseup);
 
@@ -148,14 +153,14 @@ var area = d3.svg.line()
 
 var area2 = d3.svg.area()
     .interpolate("monotone")
-    .x(function(d) { return x2(d.date); })
-    .y0(height2)
-    .y1(function(d) { return y2(d.price); });
+    .x(function(d) { return brush_x_domain(d.date); })
+    .y0(brush_height)
+    .y1(function(d) { return brush_y_domain(d.price); });
 
 //Plotting Twitter UH data
 var area3 = d3.svg.line()
     //.interpolate("monotone")
-    .x(function(d) { return x_3(d.date); })
+    .x(function(d) { return twitter_x_domain(d.date); })
     .y(function(d) { return y_3(d.price); });
     //.y0(height)
     //.y1(function(d) { return y_3(d.price); });
@@ -163,7 +168,7 @@ var area3 = d3.svg.line()
 //Plaotting Twitter UH with SG data
 var area4 = d3.svg.line()
     //.interpolate("monotone")
-    .x(function(d) { return x_3(d.date); })
+    .x(function(d) { return twitter_x_domain(d.date); })
     .y(function(d) { return y_3(d.sg); });
     //.y0(height)
     //.y1(function(d) { return y_3(d.price); });
@@ -198,6 +203,7 @@ var context = svg.append("g")
     .attr("class", "context")
     .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
 
+//Chart headers
 data2.append('text').text("Event").attr("class","chart_header").attr('x',0).attr('y',20);
 focus.append('text').text("Defacements").attr("class","chart_header").attr('x',0).attr('y',20);
 focus1.append('text').text("Twitter").attr("class","chart_header").attr('x',0).attr('y',20);
@@ -222,7 +228,7 @@ function dot_x(d){
 }
 
 d3.csv("twitter.csv", type, function(error, data) {
-  x_3.domain(d3.extent(data.map(function(d) { return d.date; })));
+  twitter_x_domain.domain(d3.extent(data.map(function(d) { return d.date; })));
   y_3.domain([0, d3.max(data.map(function(d) { return d.price; }))]);
 
   focus1.append("path")
@@ -237,7 +243,7 @@ d3.csv("twitter.csv", type, function(error, data) {
 
   focus1.append("g")
       .attr("class", "y axis")
-      .call(y_3Axis);
+      .call(twitter_y_axis);
   /*
   focus1.append("g")
       .attr("class", "x axis")
@@ -249,8 +255,8 @@ d3.csv("twitter.csv", type, function(error, data) {
 d3.csv("hotel.csv", type, function(error, data) {
   x.domain(d3.extent(data.map(function(d) { return d.date; })));
   y.domain([0, d3.max(data.map(function(d) { return d.price; }))]);
-  x2.domain(x.domain());
-  y2.domain(y.domain());
+  brush_x_domain.domain(x.domain());
+  brush_y_domain.domain(y.domain());
 
   
 
@@ -294,7 +300,7 @@ d3.csv("hotel.csv", type, function(error, data) {
 
   context.append("g")
       .attr("class", "x axis")
-      .attr("transform", "translate(0," + height2 + ")")
+      .attr("transform", "translate(0," + brush_height + ")")
       .call(xAxis2);
 
   context.append("g")
@@ -302,7 +308,7 @@ d3.csv("hotel.csv", type, function(error, data) {
       .call(brush)
     .selectAll("rect")
       .attr("y", -6)
-      .attr("height", height2 + 7);
+      .attr("height", brush_height + 7);
 });
 
 /*
@@ -310,8 +316,8 @@ When the brush function is called this will redraw all the elements based on the
 Although i have no idea how it works
 */
 function brushed() {
-  x.domain(brush.empty() ? x2.domain() : brush.extent());
-  x_3.domain(brush.empty() ? x2.domain() : brush.extent());
+  x.domain(brush.empty() ? brush_x_domain.domain() : brush.extent());
+  twitter_x_domain.domain(brush.empty() ? brush_x_domain.domain() : brush.extent());
 
   
 
@@ -337,7 +343,7 @@ function mouseup(data){
     var start=moment(date_array[0]).format("YYYY-MM-DD");
     var end=moment(date_array[1]).format("YYYY-MM-DD");
     console.log(start +" "+end);
-    publishDate(start,end);
+    //publishDate(start,end);
   }
 }
 
