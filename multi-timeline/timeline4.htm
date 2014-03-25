@@ -227,7 +227,7 @@ function dot_x(d){
   return x(parseDate(d[0]));
 }
 
-d3.csv("twitter.csv", type, function(error, data) {
+d3.csv("data1.csv", type, function(error, data) {
   twitter_x_domain.domain(d3.extent(data.map(function(d) { return d.date; })));
   y_3.domain([0, d3.max(data.map(function(d) { return d.price; }))]);
 
@@ -252,7 +252,7 @@ d3.csv("twitter.csv", type, function(error, data) {
   
 });
 
-d3.csv("hotel.csv", type, function(error, data) {
+d3.csv("data2.csv", type, function(error, data) {
   x.domain(d3.extent(data.map(function(d) { return d.date; })));
   y.domain([0, d3.max(data.map(function(d) { return d.price; }))]);
   brush_x_domain.domain(x.domain());
