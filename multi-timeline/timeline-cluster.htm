@@ -9,6 +9,7 @@ circle {
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/moment.js/2.5.1/moment.min.js"></script>
 <script>
 
 var width = 960,
@@ -25,6 +26,18 @@ var color = d3.scale.category10()
 var x = d3.scale.ordinal()
     .domain(d3.range(m))
     .rangePoints([0, width], 1);
+
+
+var dateExtent=(function(){
+  var currentDay=moment();
+  var result=[];
+  for(var a=0;a<10;a++){
+    result[a]=currentDay.add('days',-a);
+  }
+  return result;
+})();
+/*
+var x_time=d3.time.scale().range([0, width]).domain(dateExtent);*/
 
 var nodes = d3.range(n).map(function() {
   var i = Math.floor(Math.random() * m),
