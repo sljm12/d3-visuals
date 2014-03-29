@@ -1,5 +1,6 @@
-import feedparser
+import feedparser,json
 from bs4 import BeautifulSoup
+from dateutil.parser import *
 '''
 Converts Google News RSS Feeds into the news json format
 '''
@@ -18,13 +19,23 @@ def get_num_articles(last_a_tag):
     return splits[1]
 
 if __name__=="__main__":
-    d=feedparser.parse('sample2.rss')
+    d=feedparser.parse('rss/google/sample2.rss')
+
+    results=[]
     
     for e in d['entries']:
+        e_dict={}
         soup=BeautifulSoup(get_summary(e['summary_detail']))
-
+        
         a_tags=soup.find_all('a')
         print e['title'],len(a_tags),get_num_articles(a_tags[len(a_tags)-1])
+
+        dt=parse(e['published'])
+        e_dict['title']=e['title']
+        e_dict['num_articles']=get_num_articles(a_tags[len(a_tags)-1])
+        e_dict['date']=dt.isoformat()
+        results.append(e_dict)
+    
     '''
     for a in a_tags:
         print a.get('href')
