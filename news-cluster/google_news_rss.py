@@ -28,14 +28,15 @@ if __name__=="__main__":
         soup=BeautifulSoup(get_summary(e['summary_detail']))
         
         a_tags=soup.find_all('a')
-        print e['title'],len(a_tags),get_num_articles(a_tags[len(a_tags)-1])
+        #print e['title'],len(a_tags),get_num_articles(a_tags[len(a_tags)-1])
 
         dt=parse(e['published'])
         e_dict['title']=e['title']
         e_dict['num_articles']=get_num_articles(a_tags[len(a_tags)-1])
         e_dict['date']=dt.isoformat()
+        e_dict['link']=e['link']
         results.append(e_dict)
-    
+    print json.dumps(results, sort_keys=True,indent=4, separators=(',', ': '))
     '''
     for a in a_tags:
         print a.get('href')
