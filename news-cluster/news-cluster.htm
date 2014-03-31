@@ -21,7 +21,7 @@ var width = 960,
 
 var n = 100, // total number of nodes
     m = 10; // number of distinct clusters
-    ndates=12;//number of dates to generate, this is so that we get a gap at both ends for easy visualisation
+    ndates=5;//number of dates to generate, this is so that we get a gap at both ends for easy visualisation
 
 var color = d3.scale.category10()
     .domain(d3.range(m));
@@ -142,16 +142,26 @@ d3.json("all.json",function(error,json){
     })
     .call(force.drag);
 
+  var text=svg.selectAll("text").data(nodes)
+    .enter().append("text")
+    .call(force.drag);
+
   function tick(e) {
-  circle
+    circle
       .each(gravity(.2 * e.alpha))
       .each(collide(.5))
       .attr("cx", function(d) { return d.x; })
       .attr("cy", function(d) { return d.y; })
       .append('title').text(function(d){
         return d.title;
-      })
-      ;
+      });
+
+    text
+      .attr("x",function(d){ return d.x;})
+      .attr("y",function(d) { return d.y })
+      .text(function(d){
+        return d.title;
+      });
   }
 
   // Move nodes toward cluster focus.
