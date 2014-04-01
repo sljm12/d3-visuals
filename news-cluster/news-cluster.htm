@@ -104,7 +104,12 @@ function getColorIndex(date){
   return 0;
 }
 
-d3.json("all.json",function(error,json){
+function getRadius(num_articles){
+  var radius=Math.log(num_articles)/5 * maxRadius;
+  return radius > maxRadius ? maxRadius:radius
+}
+
+d3.json("all2.json",function(error,json){
 
   var data=json.map(function(currentValue,index,array){
     //console.log(currentValue);
@@ -113,7 +118,7 @@ d3.json("all.json",function(error,json){
     currentRadius=currentRadius<10?5:maxRadius;
     console.log(getColorIndex(currentDate));
     return {
-      radius:currentRadius,
+      radius:getRadius(currentValue.num_articles),
       color: color(getColorIndex(currentDate)),
       //cx: x(i),
       cx:x_time(currentDate), //Cluster focus X coord, we move 1 so that we get a gap on the left side
@@ -152,6 +157,9 @@ d3.json("all.json",function(error,json){
       .each(collide(.5))
       .attr("cx", function(d) { return d.x; })
       .attr("cy", function(d) { return d.y; })
+      .on("click",function(d){
+        alert(d.title);
+      })
       .append('title').text(function(d){
         return d.title;
       });

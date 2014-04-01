@@ -1,4 +1,4 @@
-import feedparser,json
+import feedparser,json,argparse
 from bs4 import BeautifulSoup
 from dateutil.parser import *
 '''
@@ -16,17 +16,16 @@ def get_summary(summary_details):
 def get_num_articles(last_a_tag):
     last_entry_text=last_a_tag.text
     splits=last_entry_text.split(' ')
-    return splits[1]
+    return splits[1].replace(',','')
 
-if __name__=="__main__":
-    d=feedparser.parse('rss/google/sample2.rss')
-
+def process_rss(rss_file):
+    d=feedparser.parse(rss_file)
     results=[]
-    
+
     for e in d['entries']:
         e_dict={}
         soup=BeautifulSoup(get_summary(e['summary_detail']))
-        
+
         a_tags=soup.find_all('a')
         #print e['title'],len(a_tags),get_num_articles(a_tags[len(a_tags)-1])
 
@@ -36,7 +35,24 @@ if __name__=="__main__":
         e_dict['date']=dt.isoformat()
         e_dict['link']=e['link']
         results.append(e_dict)
-    print json.dumps(results, sort_keys=True,indent=4, separators=(',', ': '))
+    return results
+
+def process_files(list_of_files):
+    result=[]
+    for a in list_of_files:
+        r=process_rss(a)
+        result=result+r
+    return result
+
+if __name__=="__main__":
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--files",nargs="*",dest="files")
+    args=parser.parse_args()
+
+    result=process_files(args.files)
+    print json.dumps(result, sort_keys=True,
+                indent=4, separators=(',', ': '))
+
     '''
     for a in a_tags:
         print a.get('href')
